@@ -1,25 +1,26 @@
 name: McTelemetry4J
 
 services:
-  backend:
+  telemetry_backend:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: telemetry_backend
     ports:
-      - "8080:8080"
+      - "8082:8080"
     restart: unless-stopped
     depends_on:
-      - db
+      - telemetry_db
     environment:
-      MYSQL_HOST: db
+      MYSQL_HOST: telemetry_db
       MYSQL_PORT: 3306
       MYSQL_DATABASE: my_database
       MYSQL_USERNAME: my_user
       MYSQL_PASSWORD: my_password
 
-  db:
+  telemetry_db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: telemetry_db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_password
