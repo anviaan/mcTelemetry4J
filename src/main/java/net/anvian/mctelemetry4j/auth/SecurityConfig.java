@@ -27,6 +27,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/mods").access(this::checkModPassword)
+                        .requestMatchers(HttpMethod.DELETE, "/mods").access(this::checkModPassword)
+                        .requestMatchers(HttpMethod.PUT, "/mods").access(this::checkModPassword)
                         .requestMatchers("/export/csv").access(this::checkModPassword)
                         .anyRequest().permitAll()
                 );
