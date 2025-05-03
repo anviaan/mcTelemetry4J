@@ -2,6 +2,7 @@ package net.anvian.mctelemetry4j.service;
 
 import com.opencsv.CSVWriter;
 import lombok.RequiredArgsConstructor;
+import net.anvian.mctelemetry4j.dto.response.TelemetryResponse;
 import net.anvian.mctelemetry4j.exception.ExportExeption;
 import net.anvian.mctelemetry4j.repository.TelemetryRepository;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,5 +36,18 @@ public class ExportService {
             throw new ExportExeption();
         }
         return stream;
+    }
+
+    public List<TelemetryResponse> generateJson() {
+        return telemetryRepository.findAll().stream()
+                .map(t -> new TelemetryResponse(
+                        t.getMod().getModId(),
+                        t.getMod().getModName(),
+                        t.getGameVersion(),
+                        t.getModVersion(),
+                        t.getLoader(),
+                        t.getCount()
+                ))
+                .collect(Collectors.toList());
     }
 }

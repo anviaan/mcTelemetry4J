@@ -1,12 +1,16 @@
 package net.anvian.mctelemetry4j.model;
 
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
-@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
 public class TelemetryId implements Serializable {
-    private Long mod;
+    private McMod mod;
     private String gameVersion;
     private String modVersion;
     private String loader;

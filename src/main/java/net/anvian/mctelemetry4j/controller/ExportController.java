@@ -1,6 +1,7 @@
 package net.anvian.mctelemetry4j.controller;
 
 import lombok.RequiredArgsConstructor;
+import net.anvian.mctelemetry4j.dto.response.TelemetryResponse;
 import net.anvian.mctelemetry4j.service.ExportService;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 @RestController
 @RequestMapping("/export")
@@ -29,5 +31,10 @@ public class ExportController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=telemetry_data.csv")
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(resource);
+    }
+
+    @GetMapping("/json")
+    public ResponseEntity<List<TelemetryResponse>> exportToJson() {
+        return ResponseEntity.ok().body(exportService.generateJson());
     }
 }
