@@ -28,7 +28,7 @@ public class ModController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ModResponse>> getMod() {
+    public ResponseEntity<List<ModResponse>> getAllMods() {
         List<ModResponse> mods = modService.getMods();
         return ResponseEntity.ok(mods);
     }
