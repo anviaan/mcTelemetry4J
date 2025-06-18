@@ -1,19 +1,20 @@
 package net.anvian.mctelemetry4j.auth;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
-
-import java.util.function.Supplier;
 
 @Configuration
 @EnableWebSecurity
@@ -21,25 +22,37 @@ public class SecurityConfig {
     @Value("${api.password}")
     private String apiPassword;
 
+    @Value("${api.username}")
+    private String apiUsername;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/mods").access(this::checkModPassword)
-                        .requestMatchers(HttpMethod.DELETE, "/mods").access(this::checkModPassword)
-                        .requestMatchers(HttpMethod.PUT, "/mods").access(this::checkModPassword)
-                        .requestMatchers("/export/csv").access(this::checkModPassword)
+                        .requestMatchers(HttpMethod.POST, "/mods").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/mods").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/mods").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/export").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/data").authenticated()
                         .anyRequest().permitAll()
-                );
+                )
+                .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 
-    private AuthorizationDecision checkModPassword(Supplier<Authentication> authentication, RequestAuthorizationContext context) {
-        HttpServletRequest request = context.getRequest();
-        String requestPassword = request.getParameter("password");
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-        boolean authorized = requestPassword != null && requestPassword.equals(apiPassword);
-        return new AuthorizationDecision(authorized);
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails user = User.builder()
+                .username(apiUsername)
+                .password(passwordEncoder().encode(apiPassword))
+                .roles("ADMIN")
+                .build();
+        return new InMemoryUserDetailsManager(user);
     }
 }

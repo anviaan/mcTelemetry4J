@@ -36,4 +36,10 @@ public class DataService {
 
         return ResponseEntity.status(201).body(new DataResponse("Data received successfully"));
     }
+
+    @Transactional
+    public ResponseEntity<Void> cleanData() {
+        telemetryRepository.deleteAll();
+        return ResponseEntity.noContent().build();
+    }
 }
