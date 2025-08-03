@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.4</version>
+		<version>3.5.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>net.anvian</groupId>
 	<artifactId>mctelemetry4j</artifactId>
-	<version>0.3.0</version>
+	<version>0.3.1</version>
 	<name>McTelemetry4J</name>
 	<description>Managing telemetry data of game mods</description>
 	<url/>
@@ -79,7 +79,7 @@
 		<dependency>
 			<groupId>com.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
-			<version>5.10</version>
+			<version>5.12.0</version>
 		</dependency>
 	</dependencies>
 
