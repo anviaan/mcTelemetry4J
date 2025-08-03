@@ -21,7 +21,6 @@ public class ExportService {
     public ByteArrayOutputStream generateCsv() {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(stream))) {
-            writer.writeNext(new String[]{"sep=,"});
             writer.writeNext(new String[]{"mod_id", "game_version", "mod_version", "loader", "count"});
 
             telemetryRepository.findAll().forEach(telemetry ->
