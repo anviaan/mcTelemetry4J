@@ -40,7 +40,7 @@ services:
     container_name: telemetry_db
     restart: unless-stopped
     ports:
-      - "${DB_BIND_HOST:-127.0.0.1}:5432:5432"
+      - "${DB_BIND_HOST:-127.0.0.1}:5433:5432"
     environment:
       POSTGRES_DB: mc_telemetry
       POSTGRES_USER: mc_user
