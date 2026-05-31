@@ -1,0 +1,2 @@
+CREATE SEQUENCE IF NOT EXISTS mc_mod_seq START 1 INCREMENT 50;
+SELECT setval('mc_mod_seq', COALESCE((SELECT MAX(id) FROM mc_mod), 0) + 50);

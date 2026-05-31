@@ -38,7 +38,13 @@ public class UtilController {
 
     @GetMapping("/health")
     public ResponseEntity<HealthResponse> health() {
-        String databaseStatus = entityManager.isOpen() ? "connected" : "disconnected";
+        String databaseStatus;
+        try {
+            entityManager.createNativeQuery("SELECT 1").getSingleResult();
+            databaseStatus = "connected";
+        } catch (Exception e) {
+            databaseStatus = "disconnected";
+        }
         return ResponseEntity.ok(
                 new HealthResponse("healthy", LocalDateTime.now(ZoneOffset.UTC), databaseStatus)
         );

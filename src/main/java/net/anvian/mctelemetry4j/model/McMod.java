@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,8 @@ import java.util.List;
 @NoArgsConstructor
 public class McMod {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "mc_mod_seq")
+    @SequenceGenerator(name = "mc_mod_seq", sequenceName = "mc_mod_seq", allocationSize = 50)
     private Long id;
     @Column(unique = true)
     private String modId;

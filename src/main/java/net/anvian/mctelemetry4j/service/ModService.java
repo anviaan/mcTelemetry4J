@@ -9,6 +9,8 @@ import net.anvian.mctelemetry4j.exception.ModAlreadyExistsException;
 import net.anvian.mctelemetry4j.exception.ModNotFoundException;
 import net.anvian.mctelemetry4j.model.McMod;
 import net.anvian.mctelemetry4j.repository.ModRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 public class ModService {
     private final ModRepository modRepository;
 
+    @Cacheable("mods")
     public List<ModResponse> getMods() {
         List<McMod> mods = modRepository.findAll();
         return mods.stream()
@@ -26,6 +29,7 @@ public class ModService {
     }
 
     @Transactional
+    @CacheEvict(value = "mods", allEntries = true)
     public ModResponse createMod(CreateModRequest request) {
         if (modRepository.findByModId(request.mod_id()).isPresent()) {
             throw new ModAlreadyExistsException();
@@ -37,6 +41,7 @@ public class ModService {
     }
 
     @Transactional
+    @CacheEvict(value = "mods", allEntries = true)
     public void deleteMod(long id) {
         if (!modRepository.existsById(id)) {
             throw new ModNotFoundException();
@@ -45,6 +50,7 @@ public class ModService {
     }
 
     @Transactional
+    @CacheEvict(value = "mods", allEntries = true)
     public ModResponse updateMod(long id, @Valid CreateModRequest request) {
         McMod mod = modRepository.findById(id)
                 .orElseThrow(ModNotFoundException::new);

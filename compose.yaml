@@ -1,40 +1,58 @@
 name: McTelemetry4J
 
 services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: telemetry_tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+    depends_on:
+      - telemetry_backend
+
   telemetry_backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: telemetry_backend
-    ports:
-      - "8082:8080"
     restart: unless-stopped
     depends_on:
-      - telemetry_db
+      telemetry_db:
+        condition: service_healthy
     environment:
-      MYSQL_HOST: telemetry_db
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: my_database
-      MYSQL_USERNAME: my_user
-      MYSQL_PASSWORD: my_password
+      DB_HOST: telemetry_db
+      DB_PORT: 5432
+      DB_NAME: mc_telemetry
+      DB_USERNAME: mc_user
+      DB_PASSWORD: ${DB_PASSWORD}
+      API_USERNAME: ${API_USERNAME}
+      API_PASSWORD: ${API_PASSWORD}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/telemetry/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   telemetry_db:
-    image: mysql:8.0
+    image: postgres:16-alpine
     container_name: telemetry_db
     restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: my_database
-      MYSQL_USER: my_user
-      MYSQL_PASSWORD: my_password
     ports:
-      - "3307:3306"
+      - "${DB_BIND_HOST:-127.0.0.1}:5432:5432"
+    environment:
+      POSTGRES_DB: mc_telemetry
+      POSTGRES_USER: mc_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - db_data:/var/lib/mysql
-
-networks:
-  default:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mc_user -d mc_telemetry"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
-  db_data:
-    name: mctelemetry4j_db_data
+  pg_data:
