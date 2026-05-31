@@ -16,7 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 @RestController
-@RequestMapping("/export")
+@RequestMapping({"/export", "/telemetry/export"})
 @RequiredArgsConstructor
 public class ExportController {
     private final ExportService exportService;

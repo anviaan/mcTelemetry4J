@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/mods")
+@RequestMapping({"/mods", "/telemetry/mods"})
 @RequiredArgsConstructor
 public class ModController {
     private final ModService modService;

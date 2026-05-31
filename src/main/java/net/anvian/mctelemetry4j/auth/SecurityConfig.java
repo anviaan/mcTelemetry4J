@@ -26,15 +26,15 @@ public class SecurityConfig {
     private String apiUsername;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/mods").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/mods").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/mods").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/export").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/data").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/mods", "/telemetry/mods").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/mods", "/telemetry/mods").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/mods", "/telemetry/mods").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/export", "/telemetry/export").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/data", "/telemetry/data").authenticated()
                         .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
