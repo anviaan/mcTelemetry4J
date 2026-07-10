@@ -1,0 +1,59 @@
+### Run http/10-mods.http and http/20-telemetry.http first.
+
+### Detailed JSON export
+GET {{baseUrl}}/export/json
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Accept: application/json
+
+> {%
+client.test("JSON export is returned", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(Array.isArray(response.body), "Expected an array of telemetry records");
+  client.assert(response.body.some(record => record.modId === client.global.get("testModId")), "Expected telemetry for the test mod");
+});
+%}
+
+### Aggregate stats export
+GET {{baseUrl}}/export/stats
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Accept: application/json
+
+> {%
+client.test("aggregate stats are returned", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(response.body.some(record => record.modId === client.global.get("testModId") && record.totalCount >= 1), "Expected stats for the test mod");
+});
+%}
+
+### CSV export
+GET {{baseUrl}}/export/csv
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Accept: text/csv
+
+> {%
+client.test("CSV export is returned", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(response.contentType.mimeType === "text/csv", "Expected a CSV response");
+});
+%}
+
+### Export authentication
+GET {{baseUrl}}/export/stats
+Accept: application/json
+
+> {%
+client.test("unauthenticated export is rejected", () => {
+  client.assert(response.status === 401, "Expected 401 but received " + response.status);
+});
+%}
+
+### Export period validation
+GET {{baseUrl}}/export/stats?period=2026-13
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Accept: application/json
+
+> {%
+client.test("invalid export period is rejected", () => {
+  client.assert(response.status === 400, "Expected 400 but received " + response.status);
+});
+%}

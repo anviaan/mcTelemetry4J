@@ -1,0 +1,47 @@
+### Prerequisite: start the local Compose stack, select the `local` environment,
+### and copy http-client.private.env.json.example to http-client.private.env.json.
+
+### Service health
+GET {{baseUrl}}/health
+Accept: application/json
+
+> {%
+client.test("health endpoint returns a connected service", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(response.body.status === "healthy", "Expected healthy status");
+  client.assert(response.body.database === "connected", "Expected connected database");
+});
+%}
+
+### Privacy notice
+GET {{baseUrl}}/
+Accept: text/html
+
+> {%
+client.test("privacy notice is available", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(response.contentType.mimeType === "text/html", "Expected an HTML response");
+});
+%}
+
+### OpenAPI JSON
+GET {{baseUrl}}/api-docs
+Accept: application/json
+
+> {%
+client.test("OpenAPI document is available", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(response.body.openapi, "Expected an OpenAPI version");
+});
+%}
+
+### Public mod listing
+GET {{baseUrl}}/mods
+Accept: application/json
+
+> {%
+client.test("public mod listing is available", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(Array.isArray(response.body), "Expected an array of mods");
+});
+%}

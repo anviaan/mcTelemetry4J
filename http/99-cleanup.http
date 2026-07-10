@@ -1,0 +1,13 @@
+### Run this after the telemetry and export requests to remove generated data.
+
+### Delete the generated test mod and its telemetry (cascades in the database)
+DELETE {{baseUrl}}/mods?id={{testModDatabaseId}}
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+
+> {%
+client.test("generated test mod is deleted", () => {
+  client.assert(response.status === 204, "Expected 204 but received " + response.status);
+});
+client.global.clear("testModDatabaseId");
+client.global.clear("testModId");
+%}

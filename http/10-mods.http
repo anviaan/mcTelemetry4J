@@ -1,0 +1,82 @@
+### Run this file before the telemetry and export request files.
+### It saves the generated database ID and mod ID as client-global variables.
+
+### Register a uniquely named test mod
+POST {{baseUrl}}/mods
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Content-Type: application/json
+
+{
+  "mod_id": "http-{{$random.uuid}}",
+  "mod_name": "HTTP Client Test Mod"
+}
+
+> {%
+client.test("test mod is created", () => {
+  client.assert(response.status === 201, "Expected 201 but received " + response.status);
+  client.assert(response.body.id, "Expected the created mod ID");
+});
+client.global.set("testModDatabaseId", response.body.id);
+client.global.set("testModId", response.body.mod_id);
+%}
+
+### Verify the registered mod is publicly visible
+GET {{baseUrl}}/mods
+Accept: application/json
+
+> {%
+client.test("created mod appears in the public listing", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(response.body.some(mod => mod.id === client.global.get("testModDatabaseId")), "Expected the created mod in the list");
+});
+%}
+
+### Update the generated test mod
+PUT {{baseUrl}}/mods?id={{testModDatabaseId}}
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Content-Type: application/json
+
+{
+  "mod_id": "http-updated-{{$random.uuid}}",
+  "mod_name": "HTTP Client Test Mod Updated"
+}
+
+> {%
+client.test("test mod is updated", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(response.body.id === client.global.get("testModDatabaseId"), "Expected the same database ID");
+});
+client.global.set("testModId", response.body.mod_id);
+%}
+
+### Duplicate mod validation
+POST {{baseUrl}}/mods
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Content-Type: application/json
+
+{
+  "mod_id": "{{testModId}}",
+  "mod_name": "Duplicate HTTP Client Test Mod"
+}
+
+> {%
+client.test("duplicate mod is rejected", () => {
+  client.assert(response.status === 409, "Expected 409 but received " + response.status);
+});
+%}
+
+### Mod validation
+POST {{baseUrl}}/mods
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Content-Type: application/json
+
+{
+  "mod_id": "",
+  "mod_name": ""
+}
+
+> {%
+client.test("invalid mod payload is rejected", () => {
+  client.assert(response.status === 400, "Expected 400 but received " + response.status);
+});
+%}

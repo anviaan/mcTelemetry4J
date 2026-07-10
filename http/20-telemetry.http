@@ -1,0 +1,53 @@
+### Run http/10-mods.http first so {{testModId}} is available.
+
+### Submit telemetry for the generated test mod
+POST {{baseUrl}}/data
+Content-Type: application/json
+
+{
+  "mod_id": "{{testModId}}",
+  "mod_version": "1.0.0",
+  "game_version": "1.21.1",
+  "loader": "fabric"
+}
+
+> {%
+client.test("telemetry is recorded", () => {
+  client.assert(response.status === 201, "Expected 201 but received " + response.status);
+  client.assert(response.body.message === "Data received successfully", "Expected a telemetry success message");
+});
+%}
+
+### Unknown mod
+POST {{baseUrl}}/data
+Content-Type: application/json
+
+{
+  "mod_id": "unknown-http-{{$random.uuid}}",
+  "mod_version": "1.0.0",
+  "game_version": "1.21.1",
+  "loader": "fabric"
+}
+
+> {%
+client.test("unknown mod is rejected", () => {
+  client.assert(response.status === 404, "Expected 404 but received " + response.status);
+});
+%}
+
+### Invalid telemetry payload
+POST {{baseUrl}}/data
+Content-Type: application/json
+
+{
+  "mod_id": "",
+  "mod_version": "",
+  "game_version": "",
+  "loader": ""
+}
+
+> {%
+client.test("invalid telemetry payload is rejected", () => {
+  client.assert(response.status === 400, "Expected 400 but received " + response.status);
+});
+%}
