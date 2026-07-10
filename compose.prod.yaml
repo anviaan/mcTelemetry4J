@@ -1,11 +1,23 @@
-name: mctelemetry4j-dev
+name: mctelemetry4j
 
 services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: telemetry_tunnel
+    restart: always
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+    depends_on:
+      - telemetry_backend
+    networks:
+      telemetry_network:
+        ipv4_address: 10.250.0.2
+
   telemetry_backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: telemetry_backend_dev
+    image: ${APP_IMAGE:-docker.nexus.homelab/mctelemetry4j:latest}
+    container_name: telemetry_backend
+    restart: always
     depends_on:
       telemetry_db:
         condition: service_healthy
@@ -19,17 +31,21 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       API_USERNAME: ${API_USERNAME}
       API_PASSWORD: ${API_PASSWORD}
-      RATE_LIMIT_TRUSTED_PROXY_ADDRESSES: ""
+      RATE_LIMIT_TRUSTED_PROXY_ADDRESSES: ${PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES:-10.250.0.2}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/telemetry/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      telemetry_network:
+        ipv4_address: 10.250.0.3
 
   telemetry_db:
     image: postgres:16-alpine
-    container_name: telemetry_db_dev
+    container_name: telemetry_db
+    restart: always
     ports:
       - "${DB_BIND_HOST:-127.0.0.1}:5433:5432"
     environment:
@@ -37,13 +53,22 @@ services:
       POSTGRES_USER: mc_user
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - pg_data_dev:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mc_user -d mc_telemetry"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      telemetry_network:
+        ipv4_address: 10.250.0.4
 
 volumes:
-  pg_data_dev:
+  pg_data:
+
+networks:
+  telemetry_network:
+    ipam:
+      config:
+        - subnet: 10.250.0.0/24

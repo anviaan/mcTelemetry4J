@@ -18,16 +18,21 @@ Do not commit `.env`. Replace every placeholder before deploying.
 
 | Variable                             | Purpose                                                                                                                                          |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `CF_TUNNEL_TOKEN`                    | Cloudflare Tunnel token used by the `cloudflared` container. It is not needed when running the application directly.                             |
+| `CF_TUNNEL_TOKEN`                    | Cloudflare Tunnel token used only by `compose.prod.yaml`. It is not needed for local development.                                               |
 | `DB_PASSWORD`                        | Password for PostgreSQL and the backend database connection.                                                                                     |
 | `DB_BIND_HOST`                       | Host interface for PostgreSQL; keep `127.0.0.1` in production unless private database access is explicitly required.                             |
 | `API_USERNAME` / `API_PASSWORD`      | HTTP Basic credentials for mod management and telemetry exports.                                                                                 |
-| `RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` | Comma-separated exact IP addresses allowed to supply `X-Forwarded-For`. The Compose default is `172.30.0.2`, the fixed address of `cloudflared`. |
+| `PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` | Comma-separated exact IP addresses allowed to supply `X-Forwarded-For`. Production defaults to `10.250.0.2`, the fixed address of `cloudflared`. |
+| `APP_BIND_HOST`                      | Host interface for the backend port; use `127.0.0.1` for local-only access or `0.0.0.0` for LAN access.                                        |
+| `APP_IMAGE`                          | Backend image used by `compose.prod.yaml`.                                                                                                      |
 
-`RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` is a security boundary: only a connection from an address in this list can
+`PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` is a security boundary: only a connection from an address in this list can
 determine the client IP from `X-Forwarded-For`. Do not add player IPs or public Cloudflare edge ranges. In this
-deployment the backend directly receives requests from the local `cloudflared` container, so `172.30.0.2` is the trusted
+production deployment the backend directly receives requests from the local `cloudflared` container, so `10.250.0.2` is the trusted
 address.
+
+`compose.yaml` is the development stack: it builds the local source, publishes the API and database on loopback, and
+does not start Cloudflared. `compose.prod.yaml` deploys the registry image, Cloudflared, and the fixed production network.
 
 ## Local development
 
@@ -102,10 +107,8 @@ docker compose logs --tail=100 telemetry_db telemetry_backend
 docker compose exec telemetry_backend wget -qO- http://localhost:8080/telemetry/health
 ```
 
-The backend deliberately has no host port published. For this Compose test,
-run health checks from inside its container as shown above. Use the direct-run
-workflow when you need to exercise the API from the host with the `curl`
-commands in the previous section.
+The containerized backend is available from the host at `http://localhost:8080`, including Swagger UI at
+`http://localhost:8080/swagger-ui/index.html`.
 
 Stop the development stack and remove its database volume when a clean test
 database is needed:
@@ -130,15 +133,16 @@ Never modify a migration that may already have run in an environment. Add a new 
 3. Build and start the complete stack:
 
    ```bash
-   docker compose up -d --build
+   docker compose -f compose.prod.yaml pull
+   docker compose -f compose.prod.yaml up -d
    ```
 
 4. Verify container health and logs:
 
    ```bash
-   docker compose ps
-   docker compose logs --tail=100 telemetry_backend cloudflared
-   docker compose exec telemetry_backend wget -qO- http://localhost:8080/telemetry/health
+   docker compose -f compose.prod.yaml ps
+   docker compose -f compose.prod.yaml logs --tail=100 telemetry_backend cloudflared
+   docker compose -f compose.prod.yaml exec telemetry_backend wget -qO- http://localhost:8080/telemetry/health
    ```
 
 5. Verify the tunnel container still has the expected address and that the backend received the matching trusted-proxy
@@ -146,10 +150,10 @@ Never modify a migration that may already have run in an environment. Add a new 
 
    ```bash
    docker inspect telemetry_tunnel --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
-   docker compose exec telemetry_backend printenv RATE_LIMIT_TRUSTED_PROXY_ADDRESSES
+   docker compose -f compose.prod.yaml exec telemetry_backend printenv RATE_LIMIT_TRUSTED_PROXY_ADDRESSES
    ```
 
-The expected value for both checks is `172.30.0.2`. If the network configuration changes, update the fixed container
+The expected value for both checks is `10.250.0.2`. If the network configuration changes, update the fixed container
 address and `RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` together before redeploying.
 
 The backend publishes port 8080 to the host loopback interface by default, so it is available at
