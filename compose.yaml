@@ -23,6 +23,8 @@ services:
     depends_on:
       telemetry_db:
         condition: service_healthy
+    ports:
+      - "${APP_BIND_HOST:-127.0.0.1}:8080:8080"
     environment:
       DB_HOST: telemetry_db
       DB_PORT: 5432

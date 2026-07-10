@@ -1,6 +1,8 @@
 package net.anvian.mctelemetry4j.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public record DataResponse(
-        String message
+        @Schema(example = "Data received successfully") String message
 ) {
 }

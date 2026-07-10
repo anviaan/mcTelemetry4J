@@ -70,6 +70,12 @@ curl -u "$API_USERNAME:$API_PASSWORD" \
 
 The API also accepts the compatibility prefix `/telemetry`, such as `/telemetry/data` and `/telemetry/export/stats`.
 
+## API documentation
+
+Interactive API documentation is available at [`/swagger-ui/index.html`](/swagger-ui/index.html). The OpenAPI
+specification is available in JSON at [`/api-docs`](/api-docs) and in YAML at [`/api-docs.yaml`](/api-docs.yaml).
+The documentation is public; operations that manage mods or export telemetry still require HTTP Basic authentication.
+
 ## Development and deployment
 
 See [the developer guide](docs/DEVELOPMENT.md) for local setup, tests, Docker deployment, database migrations,

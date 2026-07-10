@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(rateLimitingFilter, BasicAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api-docs", "/api-docs.yaml", "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, "/mods", "/telemetry/mods").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/mods", "/telemetry/mods").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/mods", "/telemetry/mods").authenticated()

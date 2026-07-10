@@ -152,7 +152,9 @@ Never modify a migration that may already have run in an environment. Add a new 
 The expected value for both checks is `172.30.0.2`. If the network configuration changes, update the fixed container
 address and `RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` together before redeploying.
 
-The backend does not publish port 8080 to the host. Public traffic reaches it only through `cloudflared`; this preserves
+The backend publishes port 8080 to the host loopback interface by default, so it is available at
+`http://localhost:8080`. Set `APP_BIND_HOST=0.0.0.0` only when the backend must be reachable directly from other hosts.
+Public traffic can also reach it through `cloudflared`; this preserves
 the trusted-proxy model. PostgreSQL is bound to loopback by default.
 
 ## API behavior to verify after deployment
