@@ -47,3 +47,15 @@ client.test("legacy stats export route works", () => {
   client.assert(response.status === 200, "Expected 200 but received " + response.status);
 });
 %}
+
+### Legacy periods export route
+GET {{baseUrl}}/telemetry/export/periods
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Accept: application/json
+
+> {%
+client.test("legacy periods export route works", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(Array.isArray(response.body), "Expected an array of periods");
+});
+%}

@@ -85,6 +85,9 @@ curl -H 'Content-Type: application/json' \
 
 curl -u "$API_USERNAME:$API_PASSWORD" \
   'http://localhost:8080/export/stats?period=2026-07'
+
+curl -u "$API_USERNAME:$API_PASSWORD" \
+  'http://localhost:8080/export/periods'
 ```
 
 Stop local services when finished:
@@ -166,6 +169,8 @@ the trusted-proxy model. PostgreSQL is bound to loopback by default.
 - `POST /data` and `POST /telemetry/data` are public and return `201` for a registered mod.
 - After 20 requests from one client IP in a minute, the next request returns `429` with `Retry-After`.
 - `GET /export/**` and `GET /telemetry/export/**` require HTTP Basic authentication.
+- `GET /export/periods` and `GET /telemetry/export/periods` return distinct stored periods in descending order, or `[]`
+  when the telemetry table is empty.
 - `DELETE /data` is intentionally unavailable and returns `405`.
 - Export filters accept only `period=YYYY-MM`; invalid values return `400`.
 

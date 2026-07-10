@@ -25,6 +25,24 @@ client.test("aggregate stats are returned", () => {
 });
 %}
 
+### Available export periods
+GET {{baseUrl}}/export/periods
+Authorization: Basic {{apiUsername}} {{apiPassword}}
+Accept: application/json
+
+> {%
+client.test("available periods are returned newest first", () => {
+  client.assert(response.status === 200, "Expected 200 but received " + response.status);
+  client.assert(Array.isArray(response.body), "Expected an array of periods");
+  client.assert(response.body.every(period => /^\d{4}-(0[1-9]|1[0-2])$/.test(period)), "Expected periods in YYYY-MM format");
+  client.assert(response.body.every((period, index, periods) => index === 0 || periods[index - 1] > period), "Expected distinct periods in descending order");
+
+  const now = new Date();
+  const currentPeriod = now.getUTCFullYear() + "-" + String(now.getUTCMonth() + 1).padStart(2, "0");
+  client.assert(response.body.includes(currentPeriod), "Expected the current UTC period after running telemetry requests");
+});
+%}
+
 ### CSV export
 GET {{baseUrl}}/export/csv
 Authorization: Basic {{apiUsername}} {{apiPassword}}
@@ -43,6 +61,16 @@ Accept: application/json
 
 > {%
 client.test("unauthenticated export is rejected", () => {
+  client.assert(response.status === 401, "Expected 401 but received " + response.status);
+});
+%}
+
+### Period listing authentication
+GET {{baseUrl}}/export/periods
+Accept: application/json
+
+> {%
+client.test("unauthenticated period listing is rejected", () => {
   client.assert(response.status === 401, "Expected 401 but received " + response.status);
 });
 %}

@@ -60,6 +60,7 @@ retrieve all retained periods.
 | `GET /export/csv?period=2026-07`   | Download detailed telemetry as CSV  |
 | `GET /export/json?period=2026-07`  | Detailed telemetry as JSON          |
 | `GET /export/stats?period=2026-07` | Counts aggregated by mod and period |
+| `GET /export/periods`              | Available periods, newest first     |
 
 For example:
 
@@ -68,12 +69,18 @@ curl -u "$API_USERNAME:$API_PASSWORD" \
   'https://telemetry.example.com/export/stats?period=2026-07'
 ```
 
-The API also accepts the compatibility prefix `/telemetry`, such as `/telemetry/data` and `/telemetry/export/stats`.
+Use `/export/periods` to discover which `YYYY-MM` values currently contain telemetry before requesting a filtered
+export. When no telemetry has been recorded, it returns an empty JSON array.
+
+The API also accepts the compatibility prefix `/telemetry`, such as `/telemetry/data`, `/telemetry/export/stats`, and
+`/telemetry/export/periods`.
 
 ## API documentation
 
-Interactive API documentation is available at [`/swagger-ui/index.html`](/swagger-ui/index.html). The OpenAPI
-specification is available in JSON at [`/api-docs`](/api-docs) and in YAML at [`/api-docs.yaml`](/api-docs.yaml).
+Interactive API documentation is available at [
+`/swagger-ui/index.html`](https://telemetry.anvian.net/swagger-ui/index.html). The OpenAPI
+specification is available in JSON at [`/api-docs`](https://telemetry.anvian.net/api-docs) and in YAML at [
+`/api-docs.yaml`](https://telemetry.anvian.net/api-docs.yaml).
 The documentation is public; operations that manage mods or export telemetry still require HTTP Basic authentication.
 
 ## Development and deployment

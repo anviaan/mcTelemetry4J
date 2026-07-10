@@ -33,4 +33,11 @@ public interface TelemetryRepository extends JpaRepository<Telemetry, TelemetryI
                 ORDER BY t.period DESC, t.mod.modId
             """)
     List<ModPeriodStatsResponse> aggregatedStats(@Param("period") String period);
+
+    @Query("""
+                SELECT DISTINCT t.period
+                FROM Telemetry t
+                ORDER BY t.period DESC
+            """)
+    List<String> findAvailablePeriods();
 }

@@ -64,4 +64,9 @@ public class ExportService {
     public List<ModPeriodStatsResponse> generateStats(String period) {
         return telemetryRepository.aggregatedStats(period);
     }
+
+    @Transactional(readOnly = true)
+    public List<String> findAvailablePeriods() {
+        return telemetryRepository.findAvailablePeriods();
+    }
 }

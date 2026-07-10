@@ -2,6 +2,7 @@ package net.anvian.mctelemetry4j.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -58,5 +59,12 @@ public class ExportController {
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Aggregated telemetry counts", content = @Content(schema = @Schema(implementation = ModPeriodStatsResponse.class))), @ApiResponse(responseCode = "400", description = "Period is invalid"), @ApiResponse(responseCode = "401", description = "Authentication required"), @ApiResponse(responseCode = "500", description = "Export failed")})
     public ResponseEntity<List<ModPeriodStatsResponse>> stats(@Parameter(description = "UTC month to export; omit for all retained periods", example = "2026-07", schema = @Schema(pattern = "\\d{4}-(0[1-9]|1[0-2])")) @RequestParam(required = false) @Pattern(regexp = "\\d{4}-(0[1-9]|1[0-2])") String period) {
         return ResponseEntity.ok(exportService.generateStats(period));
+    }
+
+    @GetMapping("/periods")
+    @Operation(summary = "List available telemetry periods")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Available periods in descending order", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(type = "string", pattern = "\\d{4}-(0[1-9]|1[0-2])", example = "2026-07"), arraySchema = @Schema(example = "[\"2026-07\", \"2026-06\", \"2026-05\"]")))), @ApiResponse(responseCode = "401", description = "Authentication required"), @ApiResponse(responseCode = "500", description = "Query failed")})
+    public ResponseEntity<List<String>> periods() {
+        return ResponseEntity.ok(exportService.findAvailablePeriods());
     }
 }
