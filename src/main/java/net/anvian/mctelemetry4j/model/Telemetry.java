@@ -22,6 +22,8 @@ public class Telemetry {
     @JoinColumn(name = "mod_id")
     private McMod mod;
     @Id
+    private String period;
+    @Id
     private String gameVersion;
     @Id
     private String modVersion;
@@ -31,6 +33,7 @@ public class Telemetry {
 
     public Telemetry(Telemetry telemetry, long count) {
         this.mod = telemetry.getMod();
+        this.period = telemetry.getPeriod();
         this.gameVersion = telemetry.getGameVersion();
         this.modVersion = telemetry.getModVersion();
         this.loader = telemetry.getLoader();

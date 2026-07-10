@@ -7,9 +7,12 @@ services:
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN:-}
     depends_on:
       - telemetry_backend
+    networks:
+      telemetry_network:
+        ipv4_address: 172.30.0.2
 
   telemetry_backend:
     build:
@@ -28,12 +31,15 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       API_USERNAME: ${API_USERNAME}
       API_PASSWORD: ${API_PASSWORD}
+      RATE_LIMIT_TRUSTED_PROXY_ADDRESSES: ${RATE_LIMIT_TRUSTED_PROXY_ADDRESSES:-172.30.0.2}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/telemetry/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - telemetry_network
 
   telemetry_db:
     image: postgres:16-alpine
@@ -53,6 +59,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - telemetry_network
 
 volumes:
   pg_data:
+
+networks:
+  telemetry_network:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

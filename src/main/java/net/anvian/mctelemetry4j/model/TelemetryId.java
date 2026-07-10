@@ -11,6 +11,7 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class TelemetryId implements Serializable {
     private McMod mod;
+    private String period;
     private String gameVersion;
     private String modVersion;
     private String loader;

@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class McTelemetry4JApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(McTelemetry4JApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(McTelemetry4JApplication.class, args);
+    }
 
 }

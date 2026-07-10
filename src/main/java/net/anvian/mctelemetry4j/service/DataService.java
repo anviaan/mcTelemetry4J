@@ -11,6 +11,9 @@ import net.anvian.mctelemetry4j.repository.TelemetryRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+
 @Service
 @RequiredArgsConstructor
 public class DataService {
@@ -21,14 +24,10 @@ public class DataService {
     public ResponseEntity<DataResponse> processData(DataRequest request) {
         McMod mcMod = modRepository.findByModId(request.mod_id()).orElseThrow(ModNotFoundException::new);
 
-        telemetryRepository.upsertTelemetry(mcMod.getId(), request.game_version(), request.mod_version(), request.loader());
+        String period = YearMonth.now(ZoneOffset.UTC).toString();
+        telemetryRepository.upsertTelemetry(mcMod.getId(), period, request.game_version(), request.mod_version(), request.loader());
 
         return ResponseEntity.status(201).body(new DataResponse("Data received successfully"));
     }
 
-    @Transactional
-    public ResponseEntity<Void> cleanData() {
-        telemetryRepository.deleteAll();
-        return ResponseEntity.noContent().build();
-    }
 }
