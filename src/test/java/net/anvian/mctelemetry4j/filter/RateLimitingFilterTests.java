@@ -57,7 +57,26 @@ class RateLimitingFilterTests {
         MockHttpServletResponse firstClientLimited = filter(
                 filter, "10.0.1.170", "10.0.1.69", "198.51.100.1", forwarded);
         MockHttpServletResponse secondClientAllowed = filter(
-                filter, "10.0.1.170", "10.0.1.69", "198.51.100.2", forwarded);
+                filter, "10.0.1.170", "10.0.1.69", "2001:db8::2", forwarded);
+
+        assertEquals(429, firstClientLimited.getStatus());
+        assertEquals(200, secondClientAllowed.getStatus());
+        assertEquals(21, forwarded.get());
+    }
+
+    @Test
+    void invalidCloudflareConnectingIpFallsBackToTrustedProxyForwardedFor() throws Exception {
+        RateLimitingFilter filter = newFilter(List.of("172.30.0.2"));
+        AtomicInteger forwarded = new AtomicInteger();
+
+        for (int i = 0; i < 20; i++) {
+            filter(filter, "172.30.0.2", "198.51.100.1", "unknown", forwarded);
+        }
+
+        MockHttpServletResponse firstClientLimited = filter(
+                filter, "172.30.0.2", "198.51.100.1", "unknown", forwarded);
+        MockHttpServletResponse secondClientAllowed = filter(
+                filter, "172.30.0.2", "198.51.100.2", "not-an-ip", forwarded);
 
         assertEquals(429, firstClientLimited.getStatus());
         assertEquals(200, secondClientAllowed.getStatus());

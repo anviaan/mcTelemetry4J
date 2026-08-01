@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
@@ -70,8 +71,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private String resolveClientIp(@NonNull HttpServletRequest request) {
         String cfConnectingIp = request.getHeader("CF-Connecting-IP");
-        if (cfConnectingIp != null && !cfConnectingIp.isBlank()) {
-            return cfConnectingIp.trim();
+        if (cfConnectingIp != null) {
+            String trimmedCfConnectingIp = cfConnectingIp.trim();
+            if (isValidIpLiteral(trimmedCfConnectingIp)) {
+                return trimmedCfConnectingIp;
+            }
         }
 
         if (trustedProxyAddresses.contains(request.getRemoteAddr())) {
@@ -81,5 +85,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             }
         }
         return request.getRemoteAddr();
+    }
+
+    private boolean isValidIpLiteral(String value) {
+        if (value.isBlank()) {
+            return false;
+        }
+
+        try {
+            InetAddress.ofLiteral(value);
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 }
