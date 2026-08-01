@@ -8,7 +8,6 @@ import net.anvian.mctelemetry4j.exception.ModNotFoundException;
 import net.anvian.mctelemetry4j.model.McMod;
 import net.anvian.mctelemetry4j.repository.ModRepository;
 import net.anvian.mctelemetry4j.repository.TelemetryRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.YearMonth;
@@ -21,13 +20,13 @@ public class DataService {
     private final TelemetryRepository telemetryRepository;
 
     @Transactional
-    public ResponseEntity<DataResponse> processData(DataRequest request) {
+    public DataResponse processData(DataRequest request) {
         McMod mcMod = modRepository.findByModId(request.mod_id()).orElseThrow(ModNotFoundException::new);
 
         String period = YearMonth.now(ZoneOffset.UTC).toString();
         telemetryRepository.upsertTelemetry(mcMod.getId(), period, request.game_version(), request.mod_version(), request.loader());
 
-        return ResponseEntity.status(201).body(new DataResponse("Data received successfully"));
+        return new DataResponse("Data received successfully");
     }
 
 }

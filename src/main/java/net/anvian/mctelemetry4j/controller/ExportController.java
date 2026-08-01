@@ -15,7 +15,6 @@ import net.anvian.mctelemetry4j.config.OpenApiConfig;
 import net.anvian.mctelemetry4j.dto.response.ModPeriodStatsResponse;
 import net.anvian.mctelemetry4j.dto.response.TelemetryResponse;
 import net.anvian.mctelemetry4j.service.ExportService;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 @RestController
@@ -41,10 +38,8 @@ public class ExportController {
     @GetMapping("/csv")
     @Operation(summary = "Download telemetry as CSV")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "CSV file", content = @Content(mediaType = "text/csv")), @ApiResponse(responseCode = "400", description = "Period is invalid"), @ApiResponse(responseCode = "401", description = "Authentication required"), @ApiResponse(responseCode = "500", description = "Export failed")})
-    public ResponseEntity<InputStreamResource> exportToCsv(@Parameter(description = "UTC month to export; omit for all retained periods", example = "2026-07", schema = @Schema(pattern = "\\d{4}-(0[1-9]|1[0-2])")) @RequestParam(required = false) @Pattern(regexp = "\\d{4}-(0[1-9]|1[0-2])") String period) {
-        ByteArrayOutputStream stream = exportService.generateCsv(period);
-        InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(stream.toByteArray()));
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=telemetry_data.csv").contentType(MediaType.parseMediaType("text/csv")).body(resource);
+    public ResponseEntity<byte[]> exportToCsv(@Parameter(description = "UTC month to export; omit for all retained periods", example = "2026-07", schema = @Schema(pattern = "\\d{4}-(0[1-9]|1[0-2])")) @RequestParam(required = false) @Pattern(regexp = "\\d{4}-(0[1-9]|1[0-2])") String period) {
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=telemetry_data.csv").contentType(MediaType.parseMediaType("text/csv")).body(exportService.generateCsv(period));
     }
 
     @GetMapping("/json")

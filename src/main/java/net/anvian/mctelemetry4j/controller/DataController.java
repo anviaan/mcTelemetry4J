@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import net.anvian.mctelemetry4j.dto.request.DataRequest;
 import net.anvian.mctelemetry4j.dto.response.DataResponse;
 import net.anvian.mctelemetry4j.service.DataService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +36,6 @@ public class DataController {
             @ApiResponse(responseCode = "429", description = "Rate limit exceeded", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{\"error\":\"Too many requests\"}")), headers = @Header(name = "Retry-After", description = "Seconds until another request can be made", schema = @Schema(type = "string")))
     })
     public ResponseEntity<DataResponse> receiveData(@Valid @RequestBody DataRequest request) {
-        return dataService.processData(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dataService.processData(request));
     }
 }

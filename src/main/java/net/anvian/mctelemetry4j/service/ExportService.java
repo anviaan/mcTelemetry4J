@@ -14,7 +14,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -23,7 +22,7 @@ public class ExportService {
     private final TelemetryRepository telemetryRepository;
 
     @Transactional(readOnly = true)
-    public ByteArrayOutputStream generateCsv(String period) {
+    public byte[] generateCsv(String period) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(stream));
              Stream<Telemetry> telemetryStream = telemetryRepository.streamAll(period)) {
@@ -42,7 +41,7 @@ public class ExportService {
         } catch (IOException e) {
             throw new ExportExeption();
         }
-        return stream;
+        return stream.toByteArray();
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +55,7 @@ public class ExportService {
                     t.getModVersion(),
                     t.getLoader(),
                     t.getCount()
-            )).collect(Collectors.toList());
+            )).toList();
         }
     }
 

@@ -6,14 +6,12 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "telemetry")
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @IdClass(TelemetryId.class)
 public class Telemetry {
@@ -30,13 +28,4 @@ public class Telemetry {
     @Id
     private String loader;
     private Long count;
-
-    public Telemetry(Telemetry telemetry, long count) {
-        this.mod = telemetry.getMod();
-        this.period = telemetry.getPeriod();
-        this.gameVersion = telemetry.getGameVersion();
-        this.modVersion = telemetry.getModVersion();
-        this.loader = telemetry.getLoader();
-        this.count = count;
-    }
 }

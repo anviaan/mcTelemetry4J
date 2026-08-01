@@ -1,7 +1,6 @@
 package net.anvian.mctelemetry4j.service;
 
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.anvian.mctelemetry4j.dto.request.CreateModRequest;
 import net.anvian.mctelemetry4j.dto.response.ModResponse;
@@ -51,7 +50,7 @@ public class ModService {
 
     @Transactional
     @CacheEvict(value = "mods", allEntries = true)
-    public ModResponse updateMod(long id, @Valid CreateModRequest request) {
+    public ModResponse updateMod(long id, CreateModRequest request) {
         McMod mod = modRepository.findById(id)
                 .orElseThrow(ModNotFoundException::new);
 
