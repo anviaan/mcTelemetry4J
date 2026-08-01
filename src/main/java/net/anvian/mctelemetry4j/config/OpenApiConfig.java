@@ -18,7 +18,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("McTelemetry4J API")
-                        .version("1.2.0")
+                        .version("1.2.1")
                         .description("API for collecting anonymous, aggregated Minecraft mod telemetry and exporting its results."))
                 .components(new Components().addSecuritySchemes(BASIC_AUTH_SCHEME,
                         new SecurityScheme()
