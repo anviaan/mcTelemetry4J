@@ -16,23 +16,29 @@ cp .env.example .env
 
 Do not commit `.env`. Replace every placeholder before deploying.
 
-| Variable                             | Purpose                                                                                                                                          |
-|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `CF_TUNNEL_TOKEN`                    | Cloudflare Tunnel token used only by `compose.prod.yaml`. It is not needed for local development.                                               |
-| `DB_PASSWORD`                        | Password for PostgreSQL and the backend database connection.                                                                                     |
-| `DB_BIND_HOST`                       | Host interface for PostgreSQL; keep `127.0.0.1` in production unless private database access is explicitly required.                             |
-| `API_USERNAME` / `API_PASSWORD`      | HTTP Basic credentials for mod management and telemetry exports.                                                                                 |
-| `PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` | Comma-separated exact IP addresses allowed to supply `X-Forwarded-For`. Production defaults to `10.250.0.2`, the fixed address of `cloudflared`. |
-| `APP_BIND_HOST`                      | Host interface for the backend port; use `127.0.0.1` for local-only access or `0.0.0.0` for LAN access.                                        |
-| `APP_IMAGE`                          | Backend image used by `compose.prod.yaml`.                                                                                                      |
+| Variable                                  | Purpose                                                                                                                                                                                 |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CF_TUNNEL_TOKEN`                         | Cloudflare Tunnel token used only by `compose.prod.yaml`. It is not needed for local development.                                                                                       |
+| `DB_PASSWORD`                             | Password for PostgreSQL and the backend database connection.                                                                                                                            |
+| `DB_BIND_HOST`                            | Host interface for PostgreSQL; keep `127.0.0.1` in production unless private database access is explicitly required.                                                                    |
+| `API_USERNAME` / `API_PASSWORD`           | HTTP Basic credentials for mod management and telemetry exports.                                                                                                                        |
+| `PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` | Comma-separated exact IP addresses allowed to supply `X-Forwarded-For` when `CF-Connecting-IP` is unavailable. Production defaults to `10.250.0.2`, the fixed address of `cloudflared`. |
+| `APP_BIND_HOST`                           | Host interface for the backend port; use `127.0.0.1` for local-only access or `0.0.0.0` for LAN access.                                                                                 |
+| `APP_IMAGE`                               | Backend image used by `compose.prod.yaml`.                                                                                                                                              |
 
-`PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` is a security boundary: only a connection from an address in this list can
-determine the client IP from `X-Forwarded-For`. Do not add player IPs or public Cloudflare edge ranges. In this
-production deployment the backend directly receives requests from the local `cloudflared` container, so `10.250.0.2` is the trusted
-address.
+The rate limiter uses the non-empty `CF-Connecting-IP` header first. Cloudflare sets this header to the original client
+IP, and it remains available through Cloudflare Tunnel and an intermediate reverse proxy such as Traefik. If the header
+is absent or blank, `PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` is a security boundary: only a connection from an address
+in this list can determine the client IP from `X-Forwarded-For`. Do not add player IPs or public Cloudflare edge ranges.
+
+Because `CF-Connecting-IP` is trusted whenever it is present, the backend must not be exposed directly to untrusted
+clients. Keep the backend bound to loopback or restrict access with a network policy so only the intended proxy path can
+reach it. In this production deployment the backend directly receives requests from the local `cloudflared`
+container, so `10.250.0.2` remains the trusted fallback address.
 
 `compose.yaml` is the development stack: it builds the local source, publishes the API and database on loopback, and
-does not start Cloudflared. `compose.prod.yaml` deploys the registry image, Cloudflared, and the fixed production network.
+does not start Cloudflared. `compose.prod.yaml` deploys the registry image, Cloudflared, and the fixed production
+network.
 
 ## Local development
 
@@ -98,10 +104,8 @@ docker compose down
 
 ### Test the containerized application with Compose
 
-Compose is also useful during development to test the same backend image and
-PostgreSQL wiring used in deployment. Start both services explicitly; this
-does **not** start `cloudflared`, so no real tunnel or `CF_TUNNEL_TOKEN` is
-required:
+Compose is also useful during development to test the same backend image and PostgreSQL wiring used in deployment. Start
+both services explicitly; this does **not** start `cloudflared`, so no real tunnel or `CF_TUNNEL_TOKEN` is required:
 
 ```bash
 docker compose up -d --build telemetry_db telemetry_backend
@@ -113,8 +117,7 @@ docker compose exec telemetry_backend wget -qO- http://localhost:8080/telemetry/
 The containerized backend is available from the host at `http://localhost:8080`, including Swagger UI at
 `http://localhost:8080/swagger-ui/index.html`.
 
-Stop the development stack and remove its database volume when a clean test
-database is needed:
+Stop the development stack and remove its database volume when a clean test database is needed:
 
 ```bash
 docker compose down -v
@@ -160,9 +163,10 @@ The expected value for both checks is `10.250.0.2`. If the network configuration
 address and `RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` together before redeploying.
 
 The backend publishes port 8080 to the host loopback interface by default, so it is available at
-`http://localhost:8080`. Set `APP_BIND_HOST=0.0.0.0` only when the backend must be reachable directly from other hosts.
-Public traffic can also reach it through `cloudflared`; this preserves
-the trusted-proxy model. PostgreSQL is bound to loopback by default.
+`http://localhost:8080`. Set `APP_BIND_HOST=0.0.0.0` only when the backend must be reachable directly from other hosts
+and access is restricted to trusted infrastructure. Public traffic should reach it through `cloudflared` (and any
+intermediate reverse proxy), which supplies the original client IP in `CF-Connecting-IP`. PostgreSQL is bound to
+loopback by default.
 
 ## API behavior to verify after deployment
 
