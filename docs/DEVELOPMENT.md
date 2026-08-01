@@ -23,7 +23,7 @@ Do not commit `.env`. Replace every placeholder before deploying.
 | `DB_BIND_HOST`                            | Host interface for PostgreSQL; keep `127.0.0.1` in production unless private database access is explicitly required.                                                                    |
 | `API_USERNAME` / `API_PASSWORD`           | HTTP Basic credentials for mod management and telemetry exports.                                                                                                                        |
 | `PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` | Comma-separated exact IP addresses allowed to supply `X-Forwarded-For` when `CF-Connecting-IP` is unavailable. Production defaults to `10.250.0.2`, the fixed address of `cloudflared`. |
-| `APP_BIND_HOST`                           | Host interface for the backend port; use `127.0.0.1` for local-only access or `0.0.0.0` for LAN access.                                                                                 |
+| `APP_BIND_HOST`                           | Development-only host interface for the backend port; keep `127.0.0.1` for local-only access.                                                                                           |
 | `APP_IMAGE`                               | Backend image used by `compose.prod.yaml`.                                                                                                                                              |
 
 The rate limiter uses the non-empty `CF-Connecting-IP` header first. Cloudflare sets this header to the original client
@@ -32,9 +32,14 @@ is absent or blank, `PROD_RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` is a security boun
 in this list can determine the client IP from `X-Forwarded-For`. Do not add player IPs or public Cloudflare edge ranges.
 
 Because `CF-Connecting-IP` is trusted whenever it is present, the backend must not be exposed directly to untrusted
-clients. Keep the backend bound to loopback or restrict access with a network policy so only the intended proxy path can
-reach it. In this production deployment the backend directly receives requests from the local `cloudflared`
-container, so `10.250.0.2` remains the trusted fallback address.
+clients. In production, omit the host port publication and keep the backend reachable only through the private network
+shared with the intended proxy. The backend directly receives requests from the local `cloudflared` container, so
+`10.250.0.2` remains the trusted fallback address.
+
+The Cloudflare Tunnel public hostname must use `http://telemetry_backend:8080` as its origin. This is the Compose
+service name on the private production network; do not use `localhost:8080`, the host address, or a published backend
+port. The production backend has no host-published port and is reachable only by services attached to
+`telemetry_network`.
 
 `compose.yaml` is the development stack: it builds the local source, publishes the API and database on loopback, and
 does not start Cloudflared. `compose.prod.yaml` deploys the registry image, Cloudflared, and the fixed production
@@ -133,7 +138,8 @@ Never modify a migration that may already have run in an environment. Add a new 
 
 ## Production deployment
 
-1. Provision a Cloudflare Tunnel for the public hostname and copy its token into `CF_TUNNEL_TOKEN`.
+1. Provision a Cloudflare Tunnel for the public hostname, configure its origin as `http://telemetry_backend:8080`, and
+   copy its token into `CF_TUNNEL_TOKEN`.
 2. On the host, create `.env` from `.env.example` and replace all example values with strong secrets. Keep
    `DB_BIND_HOST=127.0.0.1`.
 3. Build and start the complete stack:
@@ -162,11 +168,21 @@ Never modify a migration that may already have run in an environment. Add a new 
 The expected value for both checks is `10.250.0.2`. If the network configuration changes, update the fixed container
 address and `RATE_LIMIT_TRUSTED_PROXY_ADDRESSES` together before redeploying.
 
-The backend publishes port 8080 to the host loopback interface by default, so it is available at
-`http://localhost:8080`. Set `APP_BIND_HOST=0.0.0.0` only when the backend must be reachable directly from other hosts
-and access is restricted to trusted infrastructure. Public traffic should reach it through `cloudflared` (and any
-intermediate reverse proxy), which supplies the original client IP in `CF-Connecting-IP`. PostgreSQL is bound to
-loopback by default.
+The production backend does not publish port 8080 to the host. Public traffic reaches it through `cloudflared`, which
+connects to `http://telemetry_backend:8080` on the private Compose network and supplies the original client IP in
+`CF-Connecting-IP`. `APP_BIND_HOST` applies only to the development Compose file; PostgreSQL remains bound to loopback
+by default.
+
+Verify that the backend has no host-published port and that a container on the production network can reach it:
+
+```bash
+docker inspect telemetry_backend --format '{{json .NetworkSettings.Ports}}'
+docker run --rm --network mctelemetry4j_telemetry_network curlimages/curl:8.12.1 \
+  -fsS http://telemetry_backend:8080/telemetry/health
+```
+
+The first command must show no host binding for `8080/tcp`; the second must return a healthy response. A request to
+`http://127.0.0.1:8080` on the host must fail, while the public Cloudflare hostname must continue to work.
 
 ## API behavior to verify after deployment
 
